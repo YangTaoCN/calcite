@@ -18,7 +18,9 @@ package org.apache.calcite.util;
 
 import org.junit.Test;
 
+import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -89,6 +91,17 @@ public class TestUtilTest {
         TestUtil.majorVersionFromString(versionString));
   }
 
+  @Test public void testRepeat() {
+    final CharSequence a3 = TestUtil.repeat("a", 3);
+    assertThat(a3.toString(), is("aaa"));
+    final CharSequence ab0 = TestUtil.repeat("ab", 0);
+    assertThat(ab0.toString(), is(""));
+    final CharSequence ab3 = TestUtil.repeat("ab", 3);
+    assertThat(ab3.length(), is(6));
+    assertThat(ab3.subSequence(2, 4).toString(), is("ab"));
+    assertThat(ab3.subSequence(3, 5).toString(), is("ba"));
+    assertThat(ab3.subSequence(3, 6).toString(), is("bab"));
+  }
 }
 
 // End TestUtilTest.java

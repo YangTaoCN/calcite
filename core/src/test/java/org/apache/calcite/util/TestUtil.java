@@ -17,12 +17,14 @@
 package org.apache.calcite.util;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 
 import org.junit.ComparisonFailure;
 
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.annotation.Nonnull;
 
 /**
  * Static utilities for JUnit tests.
@@ -231,6 +233,49 @@ public abstract class TestUtil {
     return Integer.parseInt(matcher.group());
   }
 
+  /** Returns a {@code CharSequence} that contains a given string repeated
+   * {@code count} times. Unlike a String with the same contents, it
+   * is virtual, and only becomes real when, say, someone calls
+   * {@link StringBuilder#append(CharSequence)} with it. */
+  public static CharSequence repeat(String s, int count) {
+    final int length = s.length() * count;
+    return new RepeatCharSequence(s, length);
+  }
+
+  /** CharSequence that repeats a given string up to a given length. */
+  private static class RepeatCharSequence implements CharSequence {
+    private final int length;
+    private final String s;
+
+    RepeatCharSequence(String s, int length) {
+      this.s = Objects.requireNonNull(s);
+      this.length = length;
+      Preconditions.checkArgument(s.length() > 0);
+      Preconditions.checkArgument(length >= 0);
+    }
+
+    @Override public @Nonnull String toString() {
+      //noinspection StringBufferReplaceableByString
+      return new StringBuilder().append(this).toString();
+    }
+
+    public int length() {
+      return length;
+    }
+
+    public char charAt(int index) {
+      return s.charAt(index % s.length());
+    }
+
+    public CharSequence subSequence(int start, int end) {
+      final int offset = start % s.length();
+      if (offset == 0) {
+        return new RepeatCharSequence(s, end - start);
+      }
+      final String rotated = s.substring(offset) + s.substring(0, offset);
+      return new RepeatCharSequence(rotated, end - start);
+    }
+  }
 }
 
 // End TestUtil.java

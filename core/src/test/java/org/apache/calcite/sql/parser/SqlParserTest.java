@@ -707,37 +707,13 @@ public class SqlParserTest {
   private void checkLarge(int n) {
     final StringBuilder sql = new StringBuilder()
         .append("select '")
-        .append(repeat("abcdefghi ", n))
+        .append(TestUtil.repeat("abcdefghi ", n))
         .append("' from (values (1))");
     final StringBuilder expected = new StringBuilder()
         .append("SELECT '")
-        .append(repeat("abcdefghi ", n))
+        .append(TestUtil.repeat("abcdefghi ", n))
         .append("'\nFROM (VALUES (ROW(1)))");
     sql(sql.toString()).ok(expected.toString());
-  }
-
-  private static CharSequence repeat(String s, int count) {
-    return new CharSequence() {
-      public int length() {
-        return s.length() * count;
-      }
-
-      public char charAt(int index) {
-        return s.charAt(index % s.length());
-      }
-
-      public CharSequence subSequence(int start, int end) {
-        if (start % s.length() == end % s.length()) {
-          final int offset = start % s.length();
-          final String rotated = s.substring(offset) + s.substring(0, offset);
-          return repeat(rotated, (end - start) / s.length());
-        }
-        return new StringBuilder()
-            .append(this)
-            .delete(end, length())
-            .delete(0, start).toString();
-      }
-    };
   }
 
   // TODO: should fail in parser
