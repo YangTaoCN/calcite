@@ -28,6 +28,7 @@ import org.apache.calcite.sql.validate.SqlDelegatingConformance;
 
 import java.io.StringReader;
 import java.util.Objects;
+import javax.annotation.Nonnull;
 
 /**
  * A <code>SqlParser</code> parses a SQL statement.
@@ -94,7 +95,7 @@ public class SqlParser {
    */
   public static SqlParser create(String sql, Config config) {
     SqlAbstractParserImpl parser =
-        config.parserFactory().getParser(new StringReader(sql));
+        config.parserFactory().getParser(new BoundedStringReader(sql));
 
     return new SqlParser(sql, parser, config);
   }
@@ -349,6 +350,20 @@ public class SqlParser {
 
     public SqlParserImplFactory parserFactory() {
       return parserFactory;
+    }
+  }
+
+  /** A string reader that is prepared to say how long the string is. */
+  public static class BoundedStringReader extends StringReader {
+    final int length;
+
+    public BoundedStringReader(@Nonnull String s) {
+      super(s);
+      length = s.length();
+    }
+
+    public int length() {
+      return length;
     }
   }
 }

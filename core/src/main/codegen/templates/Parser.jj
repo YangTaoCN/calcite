@@ -147,7 +147,12 @@ public class ${parser.class} extends SqlAbstractParserImpl
      */
     public static final SqlParserImplFactory FACTORY = new SqlParserImplFactory() {
         public SqlAbstractParserImpl getParser(Reader stream) {
-            return new ${parser.class}(stream);
+            final ${parser.class} parser = new ${parser.class}(stream);
+            if (stream instanceof SqlParser.BoundedStringReader) {
+              parser.jj_input_stream.ReInit(stream, 1, 1,
+                  ((SqlParser.BoundedStringReader) stream).length());
+            }
+            return parser;
         }
     };
 
