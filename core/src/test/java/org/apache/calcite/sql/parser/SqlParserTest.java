@@ -705,15 +705,33 @@ public class SqlParserTest {
   }
 
   private void checkLarge(int n) {
-    final StringBuilder sql = new StringBuilder()
+    final CharSequence bigString = TestUtil.repeat("abcdefghi ", n);
+
+    // a query with a character literal of length 10 * n
+    final StringBuilder sql0 = new StringBuilder()
         .append("select '")
-        .append(TestUtil.repeat("abcdefghi ", n))
+        .append(bigString)
         .append("' from (values (1))");
-    final StringBuilder expected = new StringBuilder()
+    final StringBuilder expected0 = new StringBuilder()
         .append("SELECT '")
-        .append(TestUtil.repeat("abcdefghi ", n))
+        .append(bigString)
         .append("'\nFROM (VALUES (ROW(1)))");
-    sql(sql.toString()).ok(expected.toString());
+    sql(sql0.toString()).ok(expected0.toString());
+
+    // two queries with comments of length 10 * n
+    final StringBuilder sql1 = new StringBuilder()
+        .append("select 1 /* a large comment: ")
+        .append(bigString)
+        .append("\n*/");
+    final String expected1 = "SELECT 1";
+    sql(sql1.toString()).ok(expected1);
+
+    final StringBuilder sql2 = new StringBuilder()
+        .append("select /* a large comment: ")
+        .append(bigString)
+        .append("*/ 2");
+    final String expected2 = "SELECT 2";
+    sql(sql2.toString()).ok(expected2);
   }
 
   // TODO: should fail in parser
