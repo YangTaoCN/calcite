@@ -217,17 +217,21 @@ public class RelToSqlConverterTest {
         .ok(expectedMySql);
   }
 
-  /** Tests that GROUPING SETS parse and unparse properly, especially that they maintain proper precedence
-   * around nested lists. */
+  /** Test case for
+   * <a href="https://issues.apache.org/jira/browse/CALCITE-3097">[CALCITE-3097]
+   * GROUPING SETS breaks on sets of size &gt; 1 due to precedence issues</a>,
+   * in particular, that we maintain proper precedence around nested lists. */
   @Test public void testGroupByGroupingSets() {
     final String query = "select \"product_class_id\", \"brand_name\"\n"
         + "from \"product\"\n"
-        + "group by GROUPING SETS ((\"product_class_id\", \"brand_name\"), (\"product_class_id\"))\n"
+        + "group by GROUPING SETS ((\"product_class_id\", \"brand_name\"),"
+        + " (\"product_class_id\"))\n"
         + "order by 2, 1";
-    final String expected = "SELECT \"product_class_id\", \"brand_name\"\n" +
-        "FROM \"foodmart\".\"product\"\n" +
-        "GROUP BY GROUPING SETS((\"product_class_id\", \"brand_name\"), (\"product_class_id\"))\n" +
-        "ORDER BY \"brand_name\", \"product_class_id\"";
+    final String expected = "SELECT \"product_class_id\", \"brand_name\"\n"
+        + "FROM \"foodmart\".\"product\"\n"
+        + "GROUP BY GROUPING SETS((\"product_class_id\", \"brand_name\"),"
+        + " (\"product_class_id\"))\n"
+        + "ORDER BY \"brand_name\", \"product_class_id\"";
     sql(query)
         .withPostgresql()
         .ok(expected);

@@ -79,14 +79,14 @@ class SqlRollupOperator extends SqlInternalOperator {
             writer.startList(SqlWriter.FrameTypeEnum.SIMPLE, "(", ")");
         for (SqlNode operand2 : ((SqlCall) operand).getOperandList()) {
           writer.sep(",");
-          operand2.unparse(writer, getLeftPrec() + 1, getRightPrec() + 1);
+          operand2.unparse(writer, getLeftPrec(), getRightPrec());
         }
         writer.endList(frame2);
       } else if (operand instanceof SqlNodeList
           && ((SqlNodeList) operand).size() == 0) {
         writer.keyword("()");
       } else {
-        operand.unparse(writer, getLeftPrec() + 1, getRightPrec() + 1);
+        operand.unparse(writer, getLeftPrec(), getRightPrec());
       }
     }
     writer.endList(frame);
