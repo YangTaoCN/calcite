@@ -913,8 +913,10 @@ public class RelToSqlConverter extends SqlImplementor
       RelDataType rowType) {
     String name = rowType.getFieldNames().get(selectList.size());
     String alias = SqlValidatorUtil.getAlias(node, -1);
+    final boolean ignoreAlias = !stack.isEmpty()
+        && stack.peek().r instanceof TableModify;
     final String lowerName = name.toLowerCase(Locale.ROOT);
-    if (lowerName.startsWith("expr$")) {
+    if (lowerName.startsWith("expr$") && !ignoreAlias) {
       // Put it in ordinalMap
       ordinalMap.put(lowerName, node);
     } else if (alias == null || !alias.equals(name)) {
