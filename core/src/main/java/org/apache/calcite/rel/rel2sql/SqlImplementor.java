@@ -1135,6 +1135,7 @@ public abstract class SqlImplementor {
   public class AliasContext extends BaseContext {
     private final boolean qualified;
     private final Map<String, RelDataType> aliases;
+    private final ImmutableMap<String, SqlNode> ordinalMap;
 
     /** Creates an AliasContext; use {@link #aliasContext(Map, boolean)}. */
     protected AliasContext(SqlDialect dialect,
@@ -1142,6 +1143,7 @@ public abstract class SqlImplementor {
       super(dialect, computeFieldCount(aliases));
       this.aliases = aliases;
       this.qualified = qualified;
+      this.ordinalMap = ImmutableMap.copyOf(SqlImplementor.this.ordinalMap);
     }
 
     public SqlNode field(int ordinal) {
@@ -1299,6 +1301,9 @@ public abstract class SqlImplementor {
         // now, we need to make sure that we need to update the alias context.
         // if our aliases map has a single element:  <neededAlias, rowType>,
         // then we don't need to rewrite the alias but otherwise, it should be updated.
+        if (needNew) {
+          ordinalMap.clear();
+        }
         if (needNew
                 && neededAlias != null
                 && (aliases.size() != 1 || !aliases.containsKey(neededAlias))) {
