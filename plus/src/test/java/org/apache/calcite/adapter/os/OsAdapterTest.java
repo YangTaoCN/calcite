@@ -318,7 +318,7 @@ public class OsAdapterTest {
     assertThat(foo("-o", "json", empty), is(csvEmptyOut));
 
     final String csvOut = "x,y,z\n"
-        + "-1,true,a   \n"
+        + "-1,true,a\n"
         + "2,false,\"b, c\"\n"
         + "3,,";
     assertThat(foo("-o", "csv", q), is(csvOut));
