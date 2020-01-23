@@ -809,10 +809,8 @@ public class JdbcAdapterTest {
     final String jdbcSql = "INSERT INTO \"foodmart\".\"expense_fact\" (\"store_id\", "
         + "\"account_id\", \"exp_date\", \"time_id\", \"category_id\", \"currency_id\", "
         + "\"amount\")\n"
-        + "(SELECT 666 AS \"store_id\", 666 AS \"account_id\", "
-        + "TIMESTAMP '1997-01-01 00:00:00' AS \"exp_date\", 666 AS \"time_id\", "
-        + "'666' AS \"category_id\", 666 AS \"currency_id\", "
-        + "666 AS \"amount\"\nFROM (VALUES  (0)) AS \"t\" (\"ZERO\"))";
+        + "(SELECT 666, 666, TIMESTAMP '1997-01-01 00:00:00', 666, '666', 666, 666\n" +
+        "FROM (VALUES  (0)) AS \"t\" (\"ZERO\"))";
     final AssertThat that =
         CalciteAssert.model(JdbcTest.FOODMART_MODEL)
             .enable(CalciteAssert.DB == DatabaseInstance.HSQLDB
@@ -845,8 +843,11 @@ public class JdbcAdapterTest {
         + "        JdbcValues(tuples=[[{ 0 }]])\n\n";
     final String jdbcSql = "INSERT INTO \"foodmart\".\"expense_fact\" (\"store_id\", "
         + "\"account_id\", \"exp_date\", \"time_id\", \"category_id\", \"currency_id\","
-        + " \"amount\")\nSELECT 666, 666, TIMESTAMP '1997-01-01 00:00:00', 666, '666', 666, 666\n"
-        + "FROM (VALUES  (0)) AS \"t\" (\"ZERO\")\nUNION ALL\nSELECT 666, 777, "
+        + " \"amount\")\n"
+        + "SELECT 666, 666, TIMESTAMP '1997-01-01 00:00:00', 666, '666', 666, 666\n"
+        + "FROM (VALUES  (0)) AS \"t\" (\"ZERO\")\n"
+        + "UNION ALL\n"
+        + "SELECT 666, 777, "
         + "TIMESTAMP '1997-01-01 00:00:00', 666, '666', 666, 666\n"
         + "FROM (VALUES  (0)) AS \"t\" (\"ZERO\")";
     final AssertThat that =
@@ -888,8 +889,7 @@ public class JdbcAdapterTest {
             + " (\"store_id\", \"account_id\", \"exp_date\", \"time_id\","
             + " \"category_id\", \"currency_id\", \"amount\")\n"
             + "(SELECT \"store_id\", \"account_id\", \"exp_date\","
-            + " \"time_id\" + 1 AS \"time_id\", \"category_id\","
-            + " \"currency_id\", \"amount\"\n"
+            + " \"time_id\" + 1, \"category_id\", \"currency_id\", \"amount\"\n"
             + "FROM \"foodmart\".\"expense_fact\"\n"
             + "WHERE \"store_id\" = 666)";
         that.query(sql)

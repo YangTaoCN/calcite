@@ -16,6 +16,8 @@
  */
 package org.apache.calcite.rel.rel2sql;
 
+import com.google.common.collect.Iterators;
+
 import org.apache.calcite.adapter.jdbc.JdbcTable;
 import org.apache.calcite.linq4j.tree.Expressions;
 import org.apache.calcite.rel.RelCollation;
@@ -34,6 +36,7 @@ import org.apache.calcite.rel.core.JoinRelType;
 import org.apache.calcite.rel.core.Match;
 import org.apache.calcite.rel.core.Minus;
 import org.apache.calcite.rel.core.Project;
+import org.apache.calcite.rel.core.SetOp;
 import org.apache.calcite.rel.core.Sort;
 import org.apache.calcite.rel.core.TableFunctionScan;
 import org.apache.calcite.rel.core.TableModify;
@@ -95,6 +98,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.stream.Collectors;
@@ -125,9 +129,9 @@ public class RelToSqlConverter extends SqlImplementor
     return dispatcher.invoke(e);
   }
 
-  public Result visitChild(int i, RelNode e) {
+  public Result visitChild(int i, RelNode e, boolean anon) {
     try {
-      stack.push(new Frame(i, e));
+      stack.push(new Frame(i, e, anon));
       return dispatch(e);
     } finally {
       stack.pop();
@@ -227,8 +231,16 @@ public class RelToSqlConverter extends SqlImplementor
     if (isStar(e.getChildExps(), e.getInput().getRowType(), e.getRowType())) {
       return x;
     }
+    // We don't need to give items in the SELECT clause an alias if the result
+    // is being consumed by INSERT, UPDATE or DELETE.
+    final boolean needAlias =
+        !(stack.size() > 1
+            && Iterators.get(stack.iterator(), 1).r instanceof TableModify)
+        && !(stack.size() > 2
+            && Iterators.get(stack.iterator(), 1).r instanceof SetOp
+            && Iterators.get(stack.iterator(), 2).r instanceof TableModify);
     final Builder builder =
-        x.builder(e, Clause.SELECT);
+        x.builder(e, needAlias, Clause.SELECT);
     final List<SqlNode> selectList = new ArrayList<>();
     for (RexNode ref : e.getChildExps()) {
       SqlNode sqlExpr = builder.context.toSql(null, ref);
@@ -287,7 +299,7 @@ public class RelToSqlConverter extends SqlImplementor
     final Result x = visitChild(0, e.getInput());
     final Builder builder;
     if (e.getInput() instanceof Project) {
-      builder = x.builder(e);
+      builder = x.builder(e, stack.peek().anon);
       builder.clauses.add(Clause.GROUP_BY);
     } else {
       builder = x.builder(e, Clause.GROUP_BY);
@@ -433,21 +445,21 @@ public class RelToSqlConverter extends SqlImplementor
   public Result visit(Union e) {
     return setOpToSql(e.all
         ? SqlStdOperatorTable.UNION_ALL
-        : SqlStdOperatorTable.UNION, e);
+        : SqlStdOperatorTable.UNION, e).withAnon(stack.peek().anon);
   }
 
   /** @see #dispatch */
   public Result visit(Intersect e) {
     return setOpToSql(e.all
         ? SqlStdOperatorTable.INTERSECT_ALL
-        : SqlStdOperatorTable.INTERSECT, e);
+        : SqlStdOperatorTable.INTERSECT, e).withAnon(stack.peek().anon);
   }
 
   /** @see #dispatch */
   public Result visit(Minus e) {
     return setOpToSql(e.all
         ? SqlStdOperatorTable.EXCEPT_ALL
-        : SqlStdOperatorTable.EXCEPT, e);
+        : SqlStdOperatorTable.EXCEPT, e).withAnon(stack.peek().anon);
   }
 
   /** @see #dispatch */
@@ -632,7 +644,7 @@ public class RelToSqlConverter extends SqlImplementor
       }
     }
     Result x = visitChild(0, e.getInput());
-    Builder builder = x.builder(e, Clause.ORDER_BY);
+    Builder builder = x.builder(e, stack.peek().anon, Clause.ORDER_BY);
     if (stack.size() != 1 && builder.select.getSelectList() == null) {
       // Generates explicit column names instead of start(*) for
       // non-root order by to avoid ambiguity.
@@ -900,7 +912,7 @@ public class RelToSqlConverter extends SqlImplementor
       SqlIdentifier sqlColumn;
       if (lowerName.startsWith("expr$")) {
         sqlColumn = new SqlIdentifier("col_" + i, POS);
-        ordinalMap.put(lowerName, sqlColumn);
+//        ordinalMap.put(lowerName, sqlColumn);
       } else {
         sqlColumn = new SqlIdentifier(rowType.getFieldNames().get(i), POS);
       }
@@ -913,13 +925,12 @@ public class RelToSqlConverter extends SqlImplementor
       RelDataType rowType) {
     String name = rowType.getFieldNames().get(selectList.size());
     String alias = SqlValidatorUtil.getAlias(node, -1);
-    final boolean ignoreAlias = !stack.isEmpty()
-        && stack.peek().r instanceof TableModify;
     final String lowerName = name.toLowerCase(Locale.ROOT);
-    if (lowerName.startsWith("expr$") && !ignoreAlias) {
+    if (lowerName.startsWith("expr$")) {
       // Put it in ordinalMap
-      ordinalMap.put(lowerName, node);
-    } else if (alias == null || !alias.equals(name)) {
+//      ordinalMap.put(lowerName, node);
+    }
+    if (alias == null || !alias.equals(name)) {
       node = as(node, name);
     }
     selectList.add(node);
@@ -935,10 +946,12 @@ public class RelToSqlConverter extends SqlImplementor
   private static class Frame {
     private final int ordinalInParent;
     private final RelNode r;
+    private final boolean anon;
 
-    Frame(int ordinalInParent, RelNode r) {
+    Frame(int ordinalInParent, RelNode r, boolean anon) {
       this.ordinalInParent = ordinalInParent;
-      this.r = r;
+      this.r = Objects.requireNonNull(r);
+      this.anon = anon;
     }
   }
 }
