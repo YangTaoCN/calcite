@@ -57,7 +57,7 @@ Though the `GEOMETRY` data type is built-in, the functions are not enabled by
 default. You need to add `fun=spatial` to the JDBC connect string to enable
 the functions. For example, `sqlline`:
 
-{% highlight sql %}
+```sql
 $ ./sqlline
 > !connect jdbc:calcite:fun=spatial "sa" ""
 SELECT ST_PointFromText('POINT(-71.064544 42.28787)');
@@ -67,7 +67,8 @@ SELECT ST_PointFromText('POINT(-71.064544 42.28787)');
 | {"x":-71.064544,"y":42.28787} |
 +-------------------------------+
 1 row selected (0.323 seconds)
-{% endhighlight %}
+```
+
 
 ## Query rewrites
 
@@ -81,7 +82,7 @@ involving ranges of h.
 
 Suppose we have a table with the locations of restaurants:
 
-{% highlight sql %}
+```sql
 CREATE TABLE Restaurants (
   INT id NOT NULL PRIMARY KEY,
   VARCHAR(30) name,
@@ -90,7 +91,7 @@ CREATE TABLE Restaurants (
   INT y NOT NULL,
   INT h  NOT NULL DERIVED (ST_Hilbert(x, y)))
 SORT KEY (h);
-{% endhighlight %}
+```
 
 The optimizer requires that `h` is the position on the Hilbert curve of
 point (`x`, `y`), and also requires that the table is sorted on `h`.
@@ -100,15 +101,14 @@ would work just as well.
 
 The query
 
-{% highlight sql %}
+```sql
 SELECT *
 FROM Restaurants
 WHERE ST_DWithin(ST_Point(x, y), ST_Point(10.0, 20.0), 6)
-{% endhighlight %}
+```
 
 can be rewritten to
-
-{% highlight sql %}
+```sql
 SELECT *
 FROM Restaurants
 WHERE (h BETWEEN 36496 AND 36520
@@ -121,7 +121,7 @@ WHERE (h BETWEEN 36496 AND 36520
     OR h BETWEEN 33050 AND 33053
     OR h BETWEEN 33033 AND 33035)
 AND ST_DWithin(ST_Point(x, y), ST_Point(10.0, 20.0), 6)
-{% endhighlight %}
+```
 
 The rewritten query contains a collection of ranges on `h` followed by the
 original `ST_DWithin` predicate. The range predicates are evaluated first and

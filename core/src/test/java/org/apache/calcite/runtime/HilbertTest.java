@@ -45,7 +45,6 @@ public class HilbertTest {
     assertThat(Hilbert.coordsToCurve(0, 0, 2), is(0L));
   }
 
-  @Disabled
   @Test public void testSpace1() {
     final String space = ""
         + "   1   2\n"

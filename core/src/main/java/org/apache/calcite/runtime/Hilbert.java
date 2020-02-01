@@ -89,6 +89,7 @@ public class Hilbert {
   }
 
   /**
+   *
    * Transforms in-place from Hilbert transpose to geometrical axes.
    *
    * <p>Example: b=5 bits for each of n=3 coordinates.
