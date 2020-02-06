@@ -29,6 +29,7 @@ public class Hilbert {
 
   public static long coordsToCurve(int x, int y, int bitCount) {
     assert bitCount < 32;
+
     final long[] coords = {x, y};
     axesToTranspose(coords, bitCount);
     return interleave(coords, bitCount);
@@ -89,8 +90,9 @@ public class Hilbert {
   }
 
   /**
+   * Transforms in-place from Hil
    *
-   * Transforms in-place from Hilbert transpose to geometrical axes.
+   * bert transpose to geometrical axes.
    *
    * <p>Example: b=5 bits for each of n=3 coordinates.
    * 15-bit Hilbert integer = A B C D E F G H I J K L M N O is stored
@@ -98,10 +100,10 @@ public class Hilbert {
    *
    * <blockquote>
    *   <pre>
-   *     X[0] = A D G J M               X[2]|
+   *     X[0] = A D G J M                     X[2]|
    *     X[1] = B E H K N         &lt;-------&gt; | /X[1]
-   *     X[2] = C F I L O              axes |/
-   *            high low                    0------ X[0]
+   *     X[2] = C F I L O                    axes |/
+   *            high low                          0------ X[0]
    *   </pre>
    * </blockquote>
    *
@@ -150,6 +152,19 @@ public class Hilbert {
   public static void axesToTranspose(long[] x, int b) {
     final int n = x.length; // dimension
     final long m = 1 << (b - 1);
+//    final int d = n;
+//    final int length = b * d;
+
+//    for (int q = b ; q > 0; q >>= 1) {
+//      int a = (2 * b >> (q - 1)) & (1 << q);
+//      System.out.print(a);
+//      if (a != 0 ){
+//        int dim = (length - q - 1) % d;
+//        int shift = ( q/d ) % b;
+//        x[dim] |= 1 << shift;
+//      }
+//    }
+
     // Inverse undo
     for (long q = m; q > 1; q >>= 1) {
       long p = q - 1;
