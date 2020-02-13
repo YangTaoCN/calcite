@@ -47,7 +47,7 @@ dependencies {
     implementation("com.fasterxml.jackson.core:jackson-core")
     implementation("com.fasterxml.jackson.core:jackson-databind")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml")
-    implementation("com.github.davidmoten:hilbert-curve")
+    implementation("com.github.davidmoten:hilbert-curve:0.2.1")
     implementation("com.google.code.findbugs:jsr305"/* optional*/)
     implementation("com.google.guava:guava")
     implementation("com.google.uzaygezen:uzaygezen-core")

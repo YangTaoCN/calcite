@@ -27,19 +27,29 @@ import org.apache.calcite.runtime.Geometries.CapStyle;
 import org.apache.calcite.runtime.Geometries.Geom;
 import org.apache.calcite.runtime.Geometries.JoinStyle;
 
+
+
 import com.esri.core.geometry.Envelope;
 import com.esri.core.geometry.Geometry;
 import com.esri.core.geometry.GeometryEngine;
 import com.esri.core.geometry.Line;
+import com.esri.core.geometry.Operator;
 import com.esri.core.geometry.OperatorBoundary;
+import com.esri.core.geometry.OperatorExportToWkb;
+import com.esri.core.geometry.OperatorFactoryLocal;
 import com.esri.core.geometry.Point;
 import com.esri.core.geometry.Polygon;
 import com.esri.core.geometry.Polyline;
 import com.esri.core.geometry.SpatialReference;
+import com.esri.core.geometry.WkbExportFlags;
 import com.esri.core.geometry.WktExportFlags;
 import com.esri.core.geometry.WktImportFlags;
 
+import org.davidmoten.hilbert.HilbertCurve;
+import org.davidmoten.hilbert.SmallHilbertCurve;
+
 import java.math.BigDecimal;
+import java.nio.ByteBuffer;
 
 import static org.apache.calcite.runtime.Geometries.NO_SRID;
 import static org.apache.calcite.runtime.Geometries.bind;
@@ -49,6 +59,8 @@ import static org.apache.calcite.runtime.Geometries.intersects;
 import static org.apache.calcite.runtime.Geometries.makeLine;
 import static org.apache.calcite.runtime.Geometries.point;
 import static org.apache.calcite.runtime.Geometries.todo;
+
+
 
 /**
  * Helper methods to implement Geo-spatial functions in generated code.
@@ -79,6 +91,13 @@ public class GeoFunctions {
   private GeoFunctions() {}
 
   // Geometry conversion functions (2D and 3D) ================================
+
+  // GEOMETRY → WKB
+  public static ByteBuffer ST_AsBinary(Geom g) {
+    OperatorExportToWkb op = (OperatorExportToWkb) OperatorFactoryLocal
+        .getInstance().getOperator(Operator.Type.ExportToWkb);
+    return op.execute(WkbExportFlags.wkbExportDefaults, g.g(), null);
+  }
 
   public static String ST_AsText(Geom g) {
     return ST_AsWKT(g);
@@ -232,7 +251,11 @@ public class GeoFunctions {
   /** Alias for {@link #ST_Point(BigDecimal, BigDecimal)}. */
   @Hints({"SqlKind:ST_POINT"})
   public static Geom ST_MakePoint(BigDecimal x, BigDecimal y) {
-    return ST_Point(x, y);
+    if (x != null && y != null) {
+      return ST_Point(x, y);
+    } else {
+      return  null;
+    }
   }
 
   /** Alias for {@link #ST_Point(BigDecimal, BigDecimal, BigDecimal)}. */
@@ -492,7 +515,8 @@ public class GeoFunctions {
     if (g instanceof Point) {
       final double x = ((Point) g).getX();
       final double y = ((Point) g).getY();
-      return new HilbertCurve2D(8).toIndex(x, y);
+
+      return HilbertCurve.small().bits(8).dimensions(2).index(x, y);
     }
     return null;
   }
