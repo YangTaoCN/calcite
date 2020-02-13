@@ -37,7 +37,21 @@ C
 #### Geometry conversion functions (2D)
 
 # ST_AsBinary(geom) Geometry to Well Known Binary
-# Not implemented
+SELECT ST_AsBinary(ST_GeomFromText('POLYGON((0 0,0 1,1 1,1 0,0 0))',4326));
+EXPR$0
+		   st_asbinary
+--------------------------------
+\001\003\000\000\000\001\000\000\000\005
+\000\000\000\000\000\000\000\000\000\000
+\000\000\000\000\000\000\000\000\000\000
+\000\000\000\000\000\000\000\000\000\000
+\000\000\000\360?\000\000\000\000\000\000
+\360?\000\000\000\000\000\000\360?\000\000
+\000\000\000\000\360?\000\000\000\000\000
+\000\000\000\000\000\000\000\000\000\000\000
+\000\000\000\000\000\000\000\000
+!ok
+
 
 # ST_AsGML(geom) Geometry to GML
 # Not implemented
@@ -705,7 +719,7 @@ true
 
 # ST_DWithin(geom1, geom2, distance) Returns whether *geom1* and *geom* are within *distance* of one another
 
-# Countries within 10 degrees of London
+# Disabled --compiling issue. # Countries within 10 degrees of London
 select "name" from GEO."countries" AS c
 where ST_Distance(ST_MakePoint(51.5, -0.12), ST_MakePoint("latitude", "longitude")) < 10;
 name
