@@ -44,6 +44,7 @@ import com.esri.core.geometry.SpatialReference;
 import com.esri.core.geometry.WkbExportFlags;
 import com.esri.core.geometry.WktExportFlags;
 import com.esri.core.geometry.WktImportFlags;
+import com.google.uzaygezen.core.CompactHilbertCurve;
 
 import org.davidmoten.hilbert.HilbertCurve;
 import org.davidmoten.hilbert.SmallHilbertCurve;
@@ -82,129 +83,130 @@ import static org.apache.calcite.runtime.Geometries.todo;
  *   <li>Make {@link #ST_MakeLine(Geom, Geom)} varargs</li>
  * </ul>
  */
-@SuppressWarnings({"UnnecessaryUnboxing", "WeakerAccess", "unused"})
-@Deterministic
-@Strict
-@Experimental
-public class GeoFunctions {
+    @SuppressWarnings({"UnnecessaryUnboxing", "WeakerAccess", "unused"})
+    @Deterministic
+    @Strict
+    @Experimental
+    public class GeoFunctions {
 
-  private GeoFunctions() {}
+      private GeoFunctions() {
+      }
 
-  // Geometry conversion functions (2D and 3D) ================================
+      // Geometry conversion functions (2D and 3D) ================================
 
-  // GEOMETRY → WKB
-  public static ByteBuffer ST_AsBinary(Geom g) {
-    OperatorExportToWkb op = (OperatorExportToWkb) OperatorFactoryLocal
-        .getInstance().getOperator(Operator.Type.ExportToWkb);
-    return op.execute(WkbExportFlags.wkbExportDefaults, g.g(), null);
-  }
+      // GEOMETRY → WKB
+      public static ByteBuffer ST_AsBinary(Geom g) {
+        OperatorExportToWkb op = (OperatorExportToWkb) OperatorFactoryLocal
+            .getInstance().getOperator(Operator.Type.ExportToWkb);
+        return op.execute(WkbExportFlags.wkbExportDefaults, g.g(), null);
+      }
 
-  public static String ST_AsText(Geom g) {
-    return ST_AsWKT(g);
-  }
+      public static String ST_AsText(Geom g) {
+        return ST_AsWKT(g);
+      }
 
-  public static String ST_AsWKT(Geom g) {
-    return GeometryEngine.geometryToWkt(g.g(),
-        WktExportFlags.wktExportDefaults);
-  }
+      public static String ST_AsWKT(Geom g) {
+        return GeometryEngine.geometryToWkt(g.g(),
+            WktExportFlags.wktExportDefaults);
+      }
 
-  public static Geom ST_GeomFromText(String s) {
-    return ST_GeomFromText(s, NO_SRID);
-  }
+      public static Geom ST_GeomFromText(String s) {
+        return ST_GeomFromText(s, NO_SRID);
+      }
 
-  public static Geom ST_GeomFromText(String s, int srid) {
-    final Geometry g = GeometryEngine.geometryFromWkt(s,
-        WktImportFlags.wktImportDefaults, Geometry.Type.Unknown);
-    return bind(g, srid);
-  }
+      public static Geom ST_GeomFromText(String s, int srid) {
+        final Geometry g = GeometryEngine.geometryFromWkt(s,
+            WktImportFlags.wktImportDefaults, Geometry.Type.Unknown);
+        return bind(g, srid);
+      }
 
-  public static Geom ST_LineFromText(String s) {
-    return ST_GeomFromText(s, NO_SRID);
-  }
+      public static Geom ST_LineFromText(String s) {
+        return ST_GeomFromText(s, NO_SRID);
+      }
 
-  public static Geom ST_LineFromText(String wkt, int srid) {
-    final Geometry g = GeometryEngine.geometryFromWkt(wkt,
-        WktImportFlags.wktImportDefaults,
-        Geometry.Type.Line);
-    return bind(g, srid);
-  }
+      public static Geom ST_LineFromText(String wkt, int srid) {
+        final Geometry g = GeometryEngine.geometryFromWkt(wkt,
+            WktImportFlags.wktImportDefaults,
+            Geometry.Type.Line);
+        return bind(g, srid);
+      }
 
-  public static Geom ST_MPointFromText(String s) {
-    return ST_GeomFromText(s, NO_SRID);
-  }
+      public static Geom ST_MPointFromText(String s) {
+        return ST_GeomFromText(s, NO_SRID);
+      }
 
-  public static Geom ST_MPointFromText(String wkt, int srid) {
-    final Geometry g = GeometryEngine.geometryFromWkt(wkt,
-        WktImportFlags.wktImportDefaults,
-        Geometry.Type.MultiPoint);
-    return bind(g, srid);
-  }
+      public static Geom ST_MPointFromText(String wkt, int srid) {
+        final Geometry g = GeometryEngine.geometryFromWkt(wkt,
+            WktImportFlags.wktImportDefaults,
+            Geometry.Type.MultiPoint);
+        return bind(g, srid);
+      }
 
-  public static Geom ST_PointFromText(String s) {
-    return ST_GeomFromText(s, NO_SRID);
-  }
+      public static Geom ST_PointFromText(String s) {
+        return ST_GeomFromText(s, NO_SRID);
+      }
 
-  public static Geom ST_PointFromText(String wkt, int srid) {
-    final Geometry g = GeometryEngine.geometryFromWkt(wkt,
-        WktImportFlags.wktImportDefaults,
-        Geometry.Type.Point);
-    return bind(g, srid);
-  }
+      public static Geom ST_PointFromText(String wkt, int srid) {
+        final Geometry g = GeometryEngine.geometryFromWkt(wkt,
+            WktImportFlags.wktImportDefaults,
+            Geometry.Type.Point);
+        return bind(g, srid);
+      }
 
-  public static Geom ST_PolyFromText(String s) {
-    return ST_GeomFromText(s, NO_SRID);
-  }
+      public static Geom ST_PolyFromText(String s) {
+        return ST_GeomFromText(s, NO_SRID);
+      }
 
-  public static Geom ST_PolyFromText(String wkt, int srid) {
-    final Geometry g = GeometryEngine.geometryFromWkt(wkt,
-        WktImportFlags.wktImportDefaults,
-        Geometry.Type.Polygon);
-    return bind(g, srid);
-  }
+      public static Geom ST_PolyFromText(String wkt, int srid) {
+        final Geometry g = GeometryEngine.geometryFromWkt(wkt,
+            WktImportFlags.wktImportDefaults,
+            Geometry.Type.Polygon);
+        return bind(g, srid);
+      }
 
-  public static Geom ST_MLineFromText(String s) {
-    return ST_GeomFromText(s, NO_SRID);
-  }
+      public static Geom ST_MLineFromText(String s) {
+        return ST_GeomFromText(s, NO_SRID);
+      }
 
-  public static Geom ST_MLineFromText(String wkt, int srid) {
-    final Geometry g = GeometryEngine.geometryFromWkt(wkt,
-        WktImportFlags.wktImportDefaults,
-        Geometry.Type.Unknown); // NOTE: there is no Geometry.Type.MultiLine
-    return bind(g, srid);
-  }
+      public static Geom ST_MLineFromText(String wkt, int srid) {
+        final Geometry g = GeometryEngine.geometryFromWkt(wkt,
+            WktImportFlags.wktImportDefaults,
+            Geometry.Type.Unknown); // NOTE: there is no Geometry.Type.MultiLine
+        return bind(g, srid);
+      }
 
-  public static Geom ST_MPolyFromText(String s) {
-    return ST_GeomFromText(s, NO_SRID);
-  }
+      public static Geom ST_MPolyFromText(String s) {
+        return ST_GeomFromText(s, NO_SRID);
+      }
 
-  public static Geom ST_MPolyFromText(String wkt, int srid) {
-    final Geometry g = GeometryEngine.geometryFromWkt(wkt,
-        WktImportFlags.wktImportDefaults,
-        Geometry.Type.Unknown); // NOTE: there is no Geometry.Type.MultiPolygon
-    return bind(g, srid);
-  }
+      public static Geom ST_MPolyFromText(String wkt, int srid) {
+        final Geometry g = GeometryEngine.geometryFromWkt(wkt,
+            WktImportFlags.wktImportDefaults,
+            Geometry.Type.Unknown); // NOTE: there is no Geometry.Type.MultiPolygon
+        return bind(g, srid);
+      }
 
-  // Geometry creation functions ==============================================
+      // Geometry creation functions ==============================================
 
-  /** Calculates a regular grid of polygons based on {@code geom}. */
-  private static void ST_MakeGrid(final Geom geom,
-      final BigDecimal deltaX, final BigDecimal deltaY) {
-    // This is a dummy function. We cannot include table functions in this
-    // package, because they have too many dependencies. See the real definition
-    // in SqlGeoFunctions.
-  }
+      /** Calculates a regular grid of polygons based on {@code geom}. */
+      private static void ST_MakeGrid(final Geom geom,
+          final BigDecimal deltaX, final BigDecimal deltaY) {
+        // This is a dummy function. We cannot include table functions in this
+        // package, because they have too many dependencies. See the real definition
+        // in SqlGeoFunctions.
+      }
 
-  /** Calculates a regular grid of points based on {@code geom}. */
-  private static void ST_MakeGridPoints(final Geom geom,
-      final BigDecimal deltaX, final BigDecimal deltaY) {
-    // This is a dummy function. We cannot include table functions in this
-    // package, because they have too many dependencies. See the real definition
-    // in SqlGeoFunctions.
-  }
+      /** Calculates a regular grid of points based on {@code geom}. */
+      private static void ST_MakeGridPoints(final Geom geom,
+          final BigDecimal deltaX, final BigDecimal deltaY) {
+        // This is a dummy function. We cannot include table functions in this
+        // package, because they have too many dependencies. See the real definition
+        // in SqlGeoFunctions.
+      }
 
-  /** Creates a rectangular Polygon. */
-  public static Geom ST_MakeEnvelope(BigDecimal xMin, BigDecimal yMin,
-      BigDecimal xMax, BigDecimal yMax, int srid) {
+      /** Creates a rectangular Polygon. */
+      public static Geom ST_MakeEnvelope(BigDecimal xMin, BigDecimal yMin,
+          BigDecimal xMax, BigDecimal yMax, int srid) {
     return ST_GeomFromText("POLYGON(("
         + xMin + " " + yMin + ", "
         + xMin + " " + yMax + ", "
@@ -506,6 +508,15 @@ public class GeoFunctions {
   }
 
   // Space-filling curves
+  final static int bits = 8;
+  final static long precision = (long) Math.pow(2, bits);
+  public static long getNormalizedLongitude(double x) {
+    return (long) ((x + 180) * (precision - 1) / 360d);
+  }
+
+  public static long getNormalizedLatitude(double y) {
+    return (long) ((y + 90) * (precision - 1) / 180d);
+  }
 
   /** Returns the position of a point on the Hilbert curve,
    * or null if it is not a 2-dimensional point. */
@@ -513,10 +524,9 @@ public class GeoFunctions {
   public static Long hilbert(Geom geom) {
     final Geometry g = geom.g();
     if (g instanceof Point) {
-      final double x = ((Point) g).getX();
-      final double y = ((Point) g).getY();
-
-      return HilbertCurve.small().bits(8).dimensions(2).index(x, y);
+      final long x = getNormalizedLatitude(((Point) g).getX());
+      final long y = getNormalizedLatitude(((Point) g).getY());
+      return HilbertCurve.small().bits(bits).dimensions(2).index(x, y);
     }
     return null;
   }
@@ -524,7 +534,9 @@ public class GeoFunctions {
   /** Returns the position of a point on the Hilbert curve. */
   @Hints({"SqlKind:HILBERT"})
   public static long hilbert(BigDecimal x, BigDecimal y) {
-    return new HilbertCurve2D(8).toIndex(x.doubleValue(), y.doubleValue());
+    final long xLong = getNormalizedLatitude(x.doubleValue());
+    final long yLong = getNormalizedLatitude(y.doubleValue());
+    return HilbertCurve.small().bits(bits).dimensions(2).index(xLong, yLong);
   }
 
   // Inner classes ============================================================

@@ -30,12 +30,13 @@ import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexUtil;
 import org.apache.calcite.runtime.GeoFunctions;
 import org.apache.calcite.runtime.Geometries;
-import org.apache.calcite.runtime.HilbertCurve2D;
 import org.apache.calcite.runtime.SpaceFillingCurve2D;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.tools.RelBuilderFactory;
+import org.davidmoten.hilbert.HilbertCurve;
+import org.davidmoten.hilbert.SmallHilbertCurve;
 
 import com.esri.core.geometry.Envelope;
 import com.esri.core.geometry.Point;
@@ -256,7 +257,16 @@ public abstract class SpatialRules {
         return null; // cannot rewrite
       }
     }
+    // Mapping double to long
+    final static int bits = 8;
+    final static long precision = (long) Math.pow(2, bits);
+    public static long getNormalizedLongitude(double x) {
+      return (long) ((x + 180) * (precision - 1) / 360d);
+    }
 
+    public static long getNormalizedLatitude(double y) {
+      return (long) ((y + 90) * (precision - 1) / 180d);
+    }
     /** Creates a predicate on the column that contains the index on the Hilbert
      * curve.
      *
@@ -273,8 +283,10 @@ public abstract class SpatialRules {
       if (distance.doubleValue() == 0D
           && Geometries.type(g.g()) == Geometries.Type.POINT) {
         final Point p = (Point) g.g();
-        final HilbertCurve2D hilbert = new HilbertCurve2D(8);
-        final long index = hilbert.toIndex(p.getX(), p.getY());
+        final SmallHilbertCurve hilbert = HilbertCurve.small().bits(bits).dimensions(2);
+        long xLong = getNormalizedLongitude(p.getX());
+        long yLong = getNormalizedLatitude(p.getY());
+        final long index = hilbert.index(xLong, yLong);
         return rexBuilder.makeCall(SqlStdOperatorTable.EQUALS, ref,
             rexBuilder.makeExactLiteral(BigDecimal.valueOf(index)));
       }
@@ -287,7 +299,7 @@ public abstract class SpatialRules {
         RexInputRef ref, Geometries.Geom g2) {
       final Geometries.Geom g3 = GeoFunctions.ST_Envelope(g2);
       final Envelope env = (Envelope) g3.g();
-      final HilbertCurve2D hilbert = new HilbertCurve2D(8);
+      final SmallHilbertCurve hilbert = HilbertCurve.small().bits(bits).dimensions(2);
       final List<SpaceFillingCurve2D.IndexRange> ranges =
           hilbert.toRanges(env.getXMin(), env.getYMin(), env.getXMax(),
               env.getYMax(), new SpaceFillingCurve2D.RangeComputeHints());
