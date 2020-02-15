@@ -515,8 +515,8 @@ public class GeoFunctions {
     if (g instanceof Point) {
       final double x = ((Point) g).getX();
       final double y = ((Point) g).getY();
+      return new HilbertCurve2D(8).toIndex(x, y);
 
-      return HilbertCurve.small().bits(8).dimensions(2).index(x, y);
     }
     return null;
   }

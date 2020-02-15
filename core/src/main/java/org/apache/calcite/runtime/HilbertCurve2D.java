@@ -88,6 +88,7 @@ public class HilbertCurve2D implements SpaceFillingCurve2D {
 
     final BitVector hilbert = BitVectorFactories.OPTIMAL.apply(resolution * 2);
 
+
     chc.index(p, 0, hilbert);
     return hilbert.toLong();
   }
