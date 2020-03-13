@@ -65,6 +65,7 @@ import org.apache.calcite.rel.rules.SortProjectTransposeRule;
 import org.apache.calcite.rel.rules.SortRemoveConstantKeysRule;
 import org.apache.calcite.rel.rules.SortRemoveRule;
 import org.apache.calcite.rel.rules.SortUnionTransposeRule;
+import org.apache.calcite.rel.rules.SpatialRules;
 import org.apache.calcite.rel.rules.TableScanRule;
 import org.apache.calcite.rel.rules.UnionMergeRule;
 import org.apache.calcite.rel.rules.UnionPullUpConstantsRule;
@@ -108,7 +109,10 @@ public class RelOptRules {
           // combination of CalcMergeRule, FilterToCalcRule, and
           // ProjectToCalcRule have the same effect?
           FilterCalcMergeRule.INSTANCE,
-          ProjectCalcMergeRule.INSTANCE);
+          ProjectCalcMergeRule.INSTANCE,
+          ReduceExpressionsRule.PROJECT_INSTANCE,
+          ReduceExpressionsRule.FILTER_INSTANCE,
+          SpatialRules.INSTANCE);
 
   static final List<RelOptRule> BASE_RULES = ImmutableList.of(
       AggregateStarTableRule.INSTANCE,
@@ -185,6 +189,7 @@ public class RelOptRules {
       ValuesReduceRule.PROJECT_FILTER_INSTANCE,
       ValuesReduceRule.PROJECT_INSTANCE,
       AggregateValuesRule.INSTANCE);
+;
 
   public static final List<RelOptRule> MATERIALIZATION_RULES = ImmutableList.of(
       MaterializedViewFilterScanRule.INSTANCE,
@@ -194,4 +199,7 @@ public class RelOptRules {
       AbstractMaterializedViewRule.INSTANCE_JOIN,
       AbstractMaterializedViewRule.INSTANCE_PROJECT_AGGREGATE,
       AbstractMaterializedViewRule.INSTANCE_AGGREGATE);
+//      ReduceExpressionsRule.PROJECT_INSTANCE,
+//      ReduceExpressionsRule.FILTER_INSTANCE,
+//      SpatialRules.INSTANCE);
 }

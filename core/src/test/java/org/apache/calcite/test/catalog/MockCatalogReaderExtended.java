@@ -187,6 +187,7 @@ public class MockCatalogReaderExtended extends MockCatalogReaderSimple {
           public RelOptPredicateList getAllPredicates(RelNode r,
               RelMetadataQuery mq) {
             // Return the predicate:
+
             //  r.hilbert = hilbert(r.longitude, r.latitude)
             final RexBuilder rexBuilder = r.getCluster().getRexBuilder();
             final RexInputRef refLongitude = rexBuilder.makeInputRef(r, 1);
@@ -194,15 +195,14 @@ public class MockCatalogReaderExtended extends MockCatalogReaderSimple {
             final RexInputRef refHilbert = rexBuilder.makeInputRef(r, 4);
             return RelOptPredicateList.of(rexBuilder,
                 ImmutableList.of(
-                    rexBuilder.makeCall(SqlStdOperatorTable.EQUALS,
+                    rexBuilder.makeCall(
+                        SqlStdOperatorTable.EQUALS,
                         refHilbert,
-                        rexBuilder.makeCall(hilbertOp(),
-                            refLongitude, refLatitude))));
+                        rexBuilder.makeCall(hilbertOp(), refLongitude, refLatitude))));
           }
 
           SqlOperator hilbertOp() {
-            for (SqlOperator op
-                : SqlOperatorTables.spatialInstance().getOperatorList()) {
+            for (SqlOperator op : SqlOperatorTables.spatialInstance().getOperatorList()) {
               if (op.getKind() == SqlKind.HILBERT
                   && op.getOperandCountRange().isValidCount(2)) {
                 return op;

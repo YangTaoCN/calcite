@@ -95,6 +95,8 @@ public abstract class SpatialRules {
 
   /** Returns a geometry if an expression is constant, null otherwise. */
   private static Geometries.Geom constantGeom(RexNode e) {
+    SqlKind a = e.getKind();
+    System.out.println(a);
     switch (e.getKind()) {
     case CAST:
       return constantGeom(((RexCall) e).getOperands().get(0));
@@ -135,40 +137,42 @@ public abstract class SpatialRules {
       final RelOptPredicateList predicates =
           call.getMetadataQuery().getAllPredicates(filter.getInput());
       int changeCount = 0;
-      for (RexNode predicate : predicates.pulledUpPredicates) {
-        final RelBuilder builder = call.builder();
-        if (predicate.getKind() == SqlKind.EQUALS) {
-          final RexCall eqCall = (RexCall) predicate;
-          if (eqCall.operands.get(0) instanceof RexInputRef
-              && eqCall.operands.get(1).getKind() == SqlKind.HILBERT) {
-            final RexInputRef ref  = (RexInputRef) eqCall.operands.get(0);
-            final RexCall hilbert = (RexCall) eqCall.operands.get(1);
-            final RexUtil.RexFinder finder = RexUtil.find(ref);
-            if (finder.anyContain(conjunctions)) {
-              // If the condition already contains "ref", it is probable that
-              // this rule has already fired once.
-              continue;
-            }
-            for (int i = 0; i < conjunctions.size();) {
-              final List<RexNode> replacements =
-                  replaceSpatial(conjunctions.get(i), builder, ref, hilbert);
-              if (replacements != null) {
-                conjunctions.remove(i);
-                conjunctions.addAll(i, replacements);
-                i += replacements.size();
-                ++changeCount;
-              } else {
-                ++i;
+      if (predicates != null) {
+        for (RexNode predicate : predicates.pulledUpPredicates) {
+          final RelBuilder builder = call.builder();
+          if (predicate.getKind() == SqlKind.EQUALS) {
+            final RexCall eqCall = (RexCall) predicate;
+            if (eqCall.operands.get(0) instanceof RexInputRef
+                && eqCall.operands.get(1).getKind() == SqlKind.HILBERT) {
+              final RexInputRef ref = (RexInputRef) eqCall.operands.get(0);
+              final RexCall hilbert = (RexCall) eqCall.operands.get(1);
+              final RexUtil.RexFinder finder = RexUtil.find(ref);
+              if (finder.anyContain(conjunctions)) {
+                // If the condition already contains "ref", it is probable that
+                // this rule has already fired once.
+                continue;
+              }
+              for (int i = 0; i < conjunctions.size(); ) {
+                final List<RexNode> replacements =
+                    replaceSpatial(conjunctions.get(i), builder, ref, hilbert);
+                if (replacements != null) {
+                  conjunctions.remove(i);
+                  conjunctions.addAll(i, replacements);
+                  i += replacements.size();
+                  ++changeCount;
+                } else {
+                  ++i;
+                }
               }
             }
           }
-        }
-        if (changeCount > 0) {
-          call.transformTo(
-              builder.push(filter.getInput())
-                  .filter(conjunctions)
-                  .build());
-          return; // we found one useful constraint; don't look for more
+          if (changeCount > 0) {
+            call.transformTo(
+                builder.push(filter.getInput())
+                    .filter(conjunctions)
+                    .build());
+            return; // we found one useful constraint; don't look for more
+          }
         }
       }
     }

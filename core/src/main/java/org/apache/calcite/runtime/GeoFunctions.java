@@ -27,8 +27,6 @@ import org.apache.calcite.runtime.Geometries.CapStyle;
 import org.apache.calcite.runtime.Geometries.Geom;
 import org.apache.calcite.runtime.Geometries.JoinStyle;
 
-
-
 import com.esri.core.geometry.Envelope;
 import com.esri.core.geometry.Geometry;
 import com.esri.core.geometry.GeometryEngine;
@@ -46,7 +44,6 @@ import com.esri.core.geometry.WktExportFlags;
 import com.esri.core.geometry.WktImportFlags;
 
 import org.davidmoten.hilbert.HilbertCurve;
-import org.davidmoten.hilbert.SmallHilbertCurve;
 
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
@@ -252,7 +249,7 @@ public class GeoFunctions {
   @Hints({"SqlKind:ST_POINT"})
   public static Geom ST_MakePoint(BigDecimal x, BigDecimal y) {
     if (x != null && y != null) {
-      return ST_Point(x, y);
+      return new Geometries.SimpleGeom(ST_Point(x, y));
     } else {
       return  null;
     }
@@ -266,9 +263,9 @@ public class GeoFunctions {
 
   /** Constructs a 2D point from coordinates. */
   @Hints({"SqlKind:ST_POINT"})
-  public static Geom ST_Point(BigDecimal x, BigDecimal y) {
+  public static Geometry ST_Point(BigDecimal x, BigDecimal y) {
     // NOTE: Combine the double and BigDecimal variants of this function
-    return point(x.doubleValue(), y.doubleValue());
+    return point(x.doubleValue(), y.doubleValue()).g();
   }
 
   /** Constructs a 3D point from coordinates. */
@@ -406,9 +403,9 @@ public class GeoFunctions {
   /** Returns whether {@code geom1} and {@code geom2} are within
    * {@code distance} of each other. */
   @Hints({"SqlKind:ST_DWITHIN"})
-  public static boolean ST_DWithin(Geom geom1, Geom geom2, double distance) {
+  public static boolean ST_DWithin(Geometry geom1, Geometry geom2, double distance) {
     final double distance1 =
-        GeometryEngine.distance(geom1.g(), geom2.g(), geom1.sr());
+        GeometryEngine.distance(geom1, geom2, SpatialReference.create(4326));
     return distance1 <= distance;
   }
 
@@ -432,7 +429,7 @@ public class GeoFunctions {
     JoinStyle joinStyle = JoinStyle.ROUND;
     float mitreLimit = 5f;
     int i = 0;
-    parse:
+parse:
     for (;;) {
       int equals = style.indexOf('=', i);
       if (equals < 0) {
@@ -523,7 +520,7 @@ public class GeoFunctions {
 
   /** Returns the position of a point on the Hilbert curve. */
   @Hints({"SqlKind:HILBERT"})
-  public static long hilbert(BigDecimal x, BigDecimal y) {
+  public static Long hilbert(BigDecimal x, BigDecimal y) {
     return new HilbertCurve2D(8).toIndex(x.doubleValue(), y.doubleValue());
   }
 

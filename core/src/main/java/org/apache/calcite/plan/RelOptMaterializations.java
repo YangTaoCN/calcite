@@ -34,6 +34,8 @@ import org.apache.calcite.rel.rules.ProjectMergeRule;
 import org.apache.calcite.rel.rules.ProjectRemoveRule;
 import org.apache.calcite.rel.rules.ProjectSetOpTransposeRule;
 import org.apache.calcite.rel.rules.ProjectToCalcRule;
+import org.apache.calcite.rel.rules.SpatialRules;
+import org.apache.calcite.rel.rules.ReduceExpressionsRule;
 import org.apache.calcite.util.Pair;
 import org.apache.calcite.util.graph.DefaultDirectedGraph;
 import org.apache.calcite.util.graph.DefaultEdge;
@@ -208,6 +210,9 @@ public abstract class RelOptMaterializations {
             .addRuleInstance(FilterCalcMergeRule.INSTANCE)
             .addRuleInstance(ProjectCalcMergeRule.INSTANCE)
             .addRuleInstance(CalcMergeRule.INSTANCE)
+            .addRuleInstance(ReduceExpressionsRule.PROJECT_INSTANCE)
+            .addRuleInstance(ReduceExpressionsRule.FILTER_INSTANCE)
+            .addRuleInstance(SpatialRules.INSTANCE)
             .build();
 
     // We must use the same HEP planner for the two optimizations below.

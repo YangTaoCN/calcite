@@ -57,6 +57,7 @@ import org.apache.calcite.rel.rules.JoinAssociateRule;
 import org.apache.calcite.rel.rules.MultiJoin;
 import org.apache.calcite.rel.rules.ProjectTableScanRule;
 import org.apache.calcite.rel.rules.ReduceExpressionsRule;
+import org.apache.calcite.rel.rules.SpatialRules;
 import org.apache.calcite.rel.stream.StreamRules;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
@@ -2051,6 +2052,10 @@ public abstract class RelOptUtil {
     }
 
     planner.addRule(ReduceExpressionsRule.FILTER_INSTANCE);
+
+    planner.addRule(ReduceExpressionsRule.PROJECT_INSTANCE);
+    planner.addRule(ReduceExpressionsRule.FILTER_INSTANCE);
+    planner.addRule(SpatialRules.INSTANCE);
 
   }
 

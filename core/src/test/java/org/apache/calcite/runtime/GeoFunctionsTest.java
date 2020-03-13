@@ -16,6 +16,11 @@
  */
 
 package org.apache.calcite.runtime;
+import org.apache.calcite.runtime.GeoFunctions;
+import org.apache.calcite.runtime.GeoFunctions;
+import com.esri.core.geometry.Geometry;
+import org.apache.calcite.runtime.Geometries.Geom;
+import java.math.BigDecimal;
 
 import org.junit.jupiter.api.Test;
 
@@ -29,5 +34,22 @@ class GeoFunctionsTest {
 
     @Test
     void testHilbert() {
+      Geom geom = GeoFunctions.ST_GeomFromText("POINT(-71.064544 42.28787)");
+      long res0 = GeoFunctions.hilbert(geom);
+      long res1 = GeoFunctions.hilbert(new BigDecimal("-71.064544"),
+          new BigDecimal("42.28787"));
+      System.out.println("index: " + res0);
+      assert 0 <= res0;
+      assert res0 <= Math.pow(2, 16) - 1;
+      assert 0 <= res1;
+      assert res1 <= Math.pow(2, 16) - 1;
+      assert res0 == res1;
+    }
+
+    @Test
+    void testST_DWithin() {
+     // assert GeoFunctions.ST_MakePoint(BigDecimal.valueOf(10.0), BigDecimal.valueOf(20.0)) == {"x":10,"y":20};
+      assert GeoFunctions.ST_DWithin(GeoFunctions.ST_Point(BigDecimal.valueOf(10.0), BigDecimal.valueOf(20.0)),
+          GeoFunctions.ST_Point(BigDecimal.valueOf(10.0), BigDecimal.valueOf(19.0)), 1);
     }
 }

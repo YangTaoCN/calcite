@@ -67,6 +67,7 @@ dependencies {
     testMysql("mysql:mysql-connector-java")
     testOracle("com.oracle.ojdbc:ojdbc8")
     testPostgresql("org.postgresql:postgresql")
+    implementation("org.postgresql:postgresql")
 
     testImplementation("net.hydromatic:foodmart-data-hsqldb")
     testImplementation("net.hydromatic:foodmart-queries")
