@@ -71,7 +71,7 @@ public class SpatialExample {
     String sql = "select * \n"
         + "from pb.\"geonames_small\" as r\n"
         + "where ST_DWithin(ST_Point(10.0, 20.0),\n"
-        + "ST_MakePoint(r.\"longitude\", r.\"latitude\"),"
+        + "ST_Point(r.\"longitude\", r.\"latitude\"),"
         + " 10)";
 
 
