@@ -52,8 +52,10 @@ import org.apache.calcite.rel.rules.LoptOptimizeJoinRule;
 import org.apache.calcite.rel.rules.MatchRule;
 import org.apache.calcite.rel.rules.MultiJoinOptimizeBushyRule;
 import org.apache.calcite.rel.rules.ProjectMergeRule;
+import org.apache.calcite.rel.rules.ReduceExpressionsRule;
 import org.apache.calcite.rel.rules.SemiJoinRule;
 import org.apache.calcite.rel.rules.SortProjectTransposeRule;
+import org.apache.calcite.rel.rules.SpatialRules;
 import org.apache.calcite.rel.rules.SubQueryRemoveRule;
 import org.apache.calcite.rel.rules.TableScanRule;
 import org.apache.calcite.sql2rel.RelDecorrelator;
@@ -239,6 +241,10 @@ public class Programs {
     return hep(RelOptRules.CALC_RULES, true, metadataProvider);
   }
 
+  public static Program spt(RelMetadataProvider metadataProvider) {
+    return hep(RelOptRules.SPATIAL_RULES, true, metadataProvider);
+  }
+
   @Deprecated // to be removed before 2.0
   public static Program subquery(RelMetadataProvider metadataProvider) {
     return subQuery(metadataProvider);
@@ -289,7 +295,9 @@ public class Programs {
           return rootRel3;
         };
 
-    return sequence(subQuery(metadataProvider),
+    return sequence(
+        spt(metadataProvider),
+        subQuery(metadataProvider),
         new DecorrelateProgram(),
         new TrimFieldsProgram(),
         program1,
@@ -343,6 +351,7 @@ public class Programs {
         RelTraitSet requiredOutputTraits,
         List<RelOptMaterialization> materializations,
         List<RelOptLattice> lattices) {
+      int count = 0;
       for (Program program : programs) {
         rel = program.run(
             planner, rel, requiredOutputTraits, materializations, lattices);

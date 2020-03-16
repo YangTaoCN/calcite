@@ -109,10 +109,8 @@ public class RelOptRules {
           // combination of CalcMergeRule, FilterToCalcRule, and
           // ProjectToCalcRule have the same effect?
           FilterCalcMergeRule.INSTANCE,
-          ProjectCalcMergeRule.INSTANCE,
-          ReduceExpressionsRule.PROJECT_INSTANCE,
-          ReduceExpressionsRule.FILTER_INSTANCE,
-          SpatialRules.INSTANCE);
+          ProjectCalcMergeRule.INSTANCE);
+
 
   static final List<RelOptRule> BASE_RULES = ImmutableList.of(
       AggregateStarTableRule.INSTANCE,
@@ -199,7 +197,9 @@ public class RelOptRules {
       AbstractMaterializedViewRule.INSTANCE_JOIN,
       AbstractMaterializedViewRule.INSTANCE_PROJECT_AGGREGATE,
       AbstractMaterializedViewRule.INSTANCE_AGGREGATE);
-//      ReduceExpressionsRule.PROJECT_INSTANCE,
-//      ReduceExpressionsRule.FILTER_INSTANCE,
-//      SpatialRules.INSTANCE);
+
+  public static final List<RelOptRule> SPATIAL_RULES = ImmutableList.of(
+      ReduceExpressionsRule.PROJECT_INSTANCE,
+      ReduceExpressionsRule.FILTER_INSTANCE,
+      SpatialRules.INSTANCE);
 }
