@@ -15,11 +15,13 @@
  * limitations under the License.
  */
 package org.apache.calcite.rel.metadata;
-
+import org.apache.calcite.rel.metadata.BuiltInMetadata;
 import org.apache.calcite.plan.RelOptPredicateList;
 import org.apache.calcite.plan.RelOptUtil;
 import org.apache.calcite.plan.hep.HepRelVertex;
 import org.apache.calcite.plan.volcano.RelSubset;
+import org.apache.calcite.plan.RelOptTable;
+import org.apache.calcite.prepare.RelOptTableImpl;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.Aggregate;
 import org.apache.calcite.rel.core.Exchange;
@@ -38,6 +40,10 @@ import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexTableInputRef;
 import org.apache.calcite.rex.RexTableInputRef.RelTableRef;
 import org.apache.calcite.rex.RexUtil;
+import org.apache.calcite.sql.SqlKind;
+import org.apache.calcite.sql.SqlOperator;
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
+import org.apache.calcite.sql.util.SqlOperatorTables;
 import org.apache.calcite.sql.validate.SqlValidatorUtil;
 import org.apache.calcite.util.BuiltInMethod;
 import org.apache.calcite.util.ImmutableBitSet;
@@ -106,8 +112,47 @@ public class RelMdAllPredicates
    * Extract predicates for a table scan.
    */
   public RelOptPredicateList getAllPredicates(TableScan scan, RelMetadataQuery mq) {
-    final BuiltInMetadata.AllPredicates.Handler handler =
-        scan.getTable().unwrap(BuiltInMetadata.AllPredicates.Handler.class);
+    Object test = scan.getTable();
+    String tableStr = test.toString();
+    final BuiltInMetadata.AllPredicates.Handler handler;
+    if (tableStr.contains("geonames")) {
+      RelOptTableImpl test1 = (RelOptTableImpl) test;
+      test1.addWrap(
+        handler = new BuiltInMetadata.AllPredicates.Handler() {
+          public RelOptPredicateList getAllPredicates(RelNode r,
+              RelMetadataQuery mq) {
+            // Return the predicate:
+
+            // r.hilbert = hilbert(r.longitude, r.latitude)
+            final RexBuilder rexBuilder = r.getCluster().getRexBuilder();
+            final RexInputRef refLatitude = rexBuilder.makeInputRef(r, 2);
+            final RexInputRef refLongitude = rexBuilder.makeInputRef(r, 3);
+            final RexInputRef refHilbert = rexBuilder.makeInputRef(r, 11);
+            return RelOptPredicateList.of(rexBuilder,
+                ImmutableList.of(
+                    rexBuilder.makeCall(
+                        SqlStdOperatorTable.EQUALS,
+                        refHilbert,
+                        rexBuilder.makeCall(hilbertOp(), refLongitude, refLatitude))));
+          }
+
+          SqlOperator hilbertOp() {
+            for (SqlOperator op : SqlOperatorTables.spatialInstance().getOperatorList()) {
+              if (op.getKind() == SqlKind.HILBERT
+                  && op.getOperandCountRange().isValidCount(2)) {
+                return op;
+              }
+            }
+            throw new AssertionError();
+          }
+
+          public MetadataDef<BuiltInMetadata.AllPredicates> getDef() {
+            return BuiltInMetadata.AllPredicates.DEF;
+          }
+        });
+    } else {
+      handler = scan.getTable().unwrap(BuiltInMetadata.AllPredicates.Handler.class);
+    }
     if (handler != null) {
       return handler.getAllPredicates(scan, mq);
     }

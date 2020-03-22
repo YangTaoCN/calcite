@@ -408,6 +408,12 @@ public class GeoFunctions {
         GeometryEngine.distance(geom1, geom2, SpatialReference.create(4326));
     return distance1 <= distance;
   }
+//  @Hints({"SqlKind:ST_DWITHIN"})
+//  public static boolean ST_DWithin(Geom geom1, Geom geom2, double distance) {
+//    final double distance1 =
+//        GeometryEngine.distance(geom1.g(), geom2.g(), SpatialReference.create(4326));
+//    return distance1 <= distance;
+//  }
 
   // Geometry operators (2D and 3D) ===========================================
 

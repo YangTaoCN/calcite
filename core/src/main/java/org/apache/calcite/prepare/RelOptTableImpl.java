@@ -65,8 +65,11 @@ import org.apache.calcite.util.Util;
 import com.google.common.collect.ImmutableList;
 
 import java.util.AbstractList;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
@@ -80,6 +83,11 @@ public class RelOptTableImpl extends Prepare.AbstractPreparingTable {
   private final Table table;
   private final Function<Class, Expression> expressionFunction;
   private final ImmutableList<String> names;
+
+  protected final List<Map.Entry<String, RelDataType>> columnList =
+      new ArrayList<>();
+  protected List<Object> wraps;
+//  protected final Set<String> monotonicColumnSet = new HashSet<>();
 
   /** Estimate for the row count, or null.
    *
@@ -103,7 +111,23 @@ public class RelOptTableImpl extends Prepare.AbstractPreparingTable {
     this.table = table; // may be null
     this.expressionFunction = expressionFunction; // may be null
     this.rowCount = rowCount; // may be null
+//    for (String name : monotonicColumnSet) {addWrap
+//      addMonotonic(name);
+//    }
+    this.wraps = ImmutableList.of();
   }
+
+  public void addWrap(Object wrap) {
+    if (wraps instanceof ImmutableList) {
+      wraps = new ArrayList<>(wraps);
+    }
+    wraps.add(wrap);
+  }
+
+//  public void addMonotonic(String name) {
+//    monotonicColumnSet.add(name);
+//    assert Pair.left(columnList).contains(name);
+//  }
 
   public static RelOptTableImpl create(
       RelOptSchema schema,

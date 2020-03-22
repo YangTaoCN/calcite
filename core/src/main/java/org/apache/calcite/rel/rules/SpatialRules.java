@@ -102,6 +102,12 @@ public abstract class SpatialRules {
       return constantGeom(((RexCall) e).getOperands().get(0));
     case LITERAL:
       return (Geometries.Geom) ((RexLiteral) e).getValue();
+    case ST_POINT:
+      RexCall ec = (RexCall)e;
+      if (ec.isLiteral()) {
+        return (Geometries.Geom) ec.rexCall2RexLiteral().getValue();
+      }
+      return null;
     default:
       return null;
     }
@@ -134,8 +140,7 @@ public abstract class SpatialRules {
       // where {[h1, h2], [h3, h4]} are the ranges of the Hilbert curve
       // intersecting the rectangle
       //   (r.longitude - d, r.longitude + d, r.latitude - d, r.latitude + d)
-      final RelOptPredicateList predicates =
-          call.getMetadataQuery().getAllPredicates(filter.getInput());
+      final RelOptPredicateList predicates = call.getMetadataQuery().getAllPredicates(filter.getInput());
       int changeCount = 0;
       if (predicates != null) {
         for (RexNode predicate : predicates.pulledUpPredicates) {

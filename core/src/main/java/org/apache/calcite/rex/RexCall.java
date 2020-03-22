@@ -16,22 +16,33 @@
  */
 package org.apache.calcite.rex;
 
+import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.apache.calcite.rel.type.RelDataTypeSystem;
+import org.apache.calcite.runtime.Geometries;
+import org.apache.calcite.runtime.GeoFunctions;
+import org.apache.calcite.runtime.Geometries.Geom;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlSyntax;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.util.Litmus;
 
+import com.esri.core.geometry.Geometry;
+import com.esri.core.geometry.Point;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import javax.annotation.Nonnull;
@@ -361,5 +372,29 @@ public class RexCall extends RexNode {
 
   @Override public int hashCode() {
     return toString().hashCode();
+  }
+
+  public boolean isLiteral() {
+    for ( RexNode op : operands) {
+      SqlKind sk = op.getKind();
+      if (sk.toString() != "LITERAL") {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  public RexLiteral rexCall2RexLiteral() {
+    RelDataTypeFactory typeFactory = (RelDataTypeFactory)(new JavaTypeFactoryImpl());
+//    Map<String, BigDecimal> map = new HashMap<String, BigDecimal>();
+//    map.put("x", (BigDecimal) RexLiteral.value((RexLiteral)operands.get(0)));
+//    map.put("y", (BigDecimal) RexLiteral.value((RexLiteral)operands.get(1)));
+    Geom map = GeoFunctions.ST_MakePoint(
+        (BigDecimal) RexLiteral.value((RexLiteral)operands.get(0)),
+        (BigDecimal) RexLiteral.value((RexLiteral)operands.get(1)));
+
+    return new RexLiteral((Comparable) map,
+        typeFactory.createSqlType(SqlTypeName.GEOMETRY),
+        SqlTypeName.GEOMETRY);
   }
 }

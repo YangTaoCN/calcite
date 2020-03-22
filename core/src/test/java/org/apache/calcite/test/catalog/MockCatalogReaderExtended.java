@@ -188,7 +188,7 @@ public class MockCatalogReaderExtended extends MockCatalogReaderSimple {
               RelMetadataQuery mq) {
             // Return the predicate:
 
-            //  r.hilbert = hilbert(r.longitude, r.latitude)
+            // r.hilbert = hilbert(r.longitude, r.latitude)
             final RexBuilder rexBuilder = r.getCluster().getRexBuilder();
             final RexInputRef refLongitude = rexBuilder.makeInputRef(r, 1);
             final RexInputRef refLatitude = rexBuilder.makeInputRef(r, 2);

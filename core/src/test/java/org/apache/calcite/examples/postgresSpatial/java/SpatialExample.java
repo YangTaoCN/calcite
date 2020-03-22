@@ -64,6 +64,7 @@ public class SpatialExample {
     dataSource.setUsername(user);
     dataSource.setPassword(password);
     Schema schema = JdbcSchema.create(rootSchema, "PB", dataSource, null, "public");
+
     rootSchema.add("PB", schema);
 
     Statement statement = calciteConnection.createStatement();
@@ -73,8 +74,6 @@ public class SpatialExample {
         + "where ST_DWithin(ST_Point(10.0, 20.0),\n"
         + "ST_Point(r.\"longitude\", r.\"latitude\"),"
         + " 10)";
-
-
 
     ResultSet resultSet = statement.executeQuery(sql);
 
