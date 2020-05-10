@@ -157,7 +157,7 @@ public class RelOptRules {
       UnionMergeRule.INTERSECT_INSTANCE,
       UnionMergeRule.MINUS_INSTANCE,
       ProjectToWindowRule.PROJECT,
-      FilterMergeRule.INSTANCE,
+      //FilterMergeRule.INSTANCE,
       DateRangeRules.FILTER_INSTANCE,
       IntersectToDistinctRule.INSTANCE);
 

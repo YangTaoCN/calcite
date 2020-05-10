@@ -19,11 +19,9 @@ package org.apache.calcite.rel.rules;
 import org.apache.calcite.plan.RelOptPredicateList;
 import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptRuleCall;
-import org.apache.calcite.plan.RelOptRules;
 import org.apache.calcite.plan.RelOptUtil;
 import org.apache.calcite.rel.core.Filter;
 import org.apache.calcite.rel.core.RelFactories;
-import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexInputRef;
@@ -82,13 +80,9 @@ import java.util.List;
  * is still present, but is evaluated after the approximate predicate has
  * eliminated many potential matches.
  */
-public abstract class SpatialRules {
-  static Number SDistance;
-  static Geometries.Geom SGeom;
-  static Number MDistance;
-  static Geometries.Geom MGeom;
+public abstract class SpatialRulesHelp {
 
-  private SpatialRules() {}
+  private SpatialRulesHelp() {}
 
   private static final RexUtil.RexFinder DWITHIN_FINDER =
       RexUtil.find(EnumSet.of(SqlKind.ST_DWITHIN, SqlKind.ST_CONTAINS));
@@ -97,11 +91,11 @@ public abstract class SpatialRules {
       RexUtil.find(SqlKind.HILBERT);
 
   public static final RelOptRule INSTANCE =
-      new FilterHilbertRule(RelFactories.LOGICAL_BUILDER);
+      new FilterHilbertRuleHelp(RelFactories.LOGICAL_BUILDER);
 
   /** Returns a geometry if an expression is constant, null otherwise. */
   private static Geometries.Geom constantGeom(RexNode e) {
-    boolean spatial = false;
+    boolean spatial = true;
     switch (e.getKind()) {
     case CAST:
       return constantGeom(((RexCall) e).getOperands().get(0));
@@ -121,19 +115,18 @@ public abstract class SpatialRules {
   /** Rule that converts ST_DWithin in a Filter condition into a predicate on
    * a Hilbert curve. */
   @SuppressWarnings("WeakerAccess")
-  public static class FilterHilbertRule extends RelOptRule {
-    public FilterHilbertRule(RelBuilderFactory relBuilderFactory) {
+  public static class FilterHilbertRuleHelp extends RelOptRule {
+    public FilterHilbertRuleHelp(RelBuilderFactory relBuilderFactory) {
       super(
           operandJ(Filter.class, null,
               DWITHIN_FINDER.filterPredicate().and(
                   HILBERT_FINDER.filterPredicate().negate()), any()),
-          relBuilderFactory, "FilterHilbertRule");
+          relBuilderFactory, "FilterHilbertRuleHelp");
     }
 
     @Override public void onMatch(RelOptRuleCall call) {
       final Filter filter = call.rel(0);
       final List<RexNode> conjunctions = new ArrayList<>();
-      final List<RexNode> conjunctionsExtra = new ArrayList<>();
       RelOptUtil.decomposeConjunction(filter.getCondition(), conjunctions);
 
       // Match a predicate
@@ -167,9 +160,8 @@ public abstract class SpatialRules {
                 final List<RexNode> replacements =
                     replaceSpatial(conjunctions.get(i), builder, ref, hilbert);
                 if (replacements != null) {
-//                  conjunctions.remove(i);
-//                  conjunctions.addAll(replacements);
-                  conjunctionsExtra.addAll(replacements);
+                  conjunctions.remove(i);
+                  conjunctions.addAll(i, replacements);
                   i += replacements.size();
                   ++changeCount;
                 } else {
@@ -178,36 +170,11 @@ public abstract class SpatialRules {
               }
             }
           }
-          if (SGeom != null && MGeom != null && SDistance != null && MDistance != null
-              && SGeom.toString().equals(MGeom.toString())
-              && SDistance.toString().equals(MDistance.toString())) {
-            return;
-          }
           if (changeCount > 0) {
-//            RelOptRuleCall callCopy = call;
-//            RelNode filterHilbert = builder.push(filter.getInput())
-//                .filter(conjunctionsExtra)
-//                .build();
-
-//            filter = new Filter(
-//                RelOptCluster cluster,
-//                RelTraitSet traits,
-//                filterHilbert,
-//                filter.condition() ) ;
-//
-//            call.transformTo(builder.push(filter.getInputs()).build());
-
-//            call.setChildRels(
-//                filterHilbert.getInput(), filter.getInputs());
-
             call.transformTo(
                 builder.push(filter.getInput())
-                    .filter(conjunctionsExtra)
                     .filter(conjunctions)
                     .build());
-//            RelOptRuleCall callCopy2 = call;
-            SGeom = MGeom;
-            SDistance = MDistance;
             return; // we found one useful constraint; don't look for more
           }
         }
@@ -240,11 +207,9 @@ public abstract class SpatialRules {
         g0 = constantGeom(op0);
         op1 = within.operands.get(1);
         final Geometries.Geom g1 = constantGeom(op1);
-
         if (RexUtil.isLiteral(within.operands.get(2), true)) {
           final Number distance =
               (Number) RexLiteral.value(within.operands.get(2));
-          MDistance = distance;
           switch (Double.compare(distance.doubleValue(), 0D)) {
           case -1: // negative distance
             return ImmutableList.of(builder.getRexBuilder().makeLiteral(false));
@@ -260,14 +225,12 @@ public abstract class SpatialRules {
                 && ((RexCall) op1).operands.equals(hilbert.operands)) {
               // Add the new predicate before the existing predicate
               // because it is cheaper to execute (albeit less selective).
-              MGeom = g0;
               return ImmutableList.of(
                   hilbertPredicate(builder.getRexBuilder(), ref, g0, distance));
             } else if (g1 != null && op0.getKind() == SqlKind.ST_POINT
                 && ((RexCall) op0).operands.equals(hilbert.operands)) {
               // Add the new predicate before the existing predicate
               // because it is cheaper to execute (albeit less selective).
-              MGeom = g0;
               return ImmutableList.of(
                   hilbertPredicate(builder.getRexBuilder(), ref, g1, distance));
             }

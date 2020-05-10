@@ -296,7 +296,7 @@ public class Programs {
         };
 
     return sequence(
-        spt(metadataProvider),
+        //spt(metadataProvider),
         subQuery(metadataProvider),
         new DecorrelateProgram(),
         new TrimFieldsProgram(),

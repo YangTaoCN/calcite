@@ -650,6 +650,7 @@ public class VolcanoPlanner extends AbstractRelOptPlanner {
       LOGGER.trace(sw.toString());
     }
     RelNode cheapest = root.buildCheapestPlan(this);
+
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug(
           "Cheapest plan:\n{}", RelOptUtil.toString(cheapest, SqlExplainLevel.ALL_ATTRIBUTES));
